@@ -17,6 +17,13 @@ func SetUpRouter(db *sql.DB) *gin.Engine {
 
 	r := gin.Default()
 
+	// Serve React static files
+	r.Static("/assets", "./frontend/dist/assets")
+
+	r.GET("/", func(c *gin.Context) {
+		c.File("./frontend/dist/index.html")
+	})
+
 	// Repositories
 	playerRepo := repository.NewPlayerRepository(db)
 	requestRepo := repository.NewWhitelistRequestRepository(db)
@@ -59,13 +66,18 @@ func SetUpRouter(db *sql.DB) *gin.Engine {
 		admin.POST("/approve/:username", adminHandler.ApprovePlayer)
 	}
 
-	// Minecraft Server APIs (IP restricted)
+	// Minecraft Server APIs
 	serverAuth := r.Group("/server")
 	serverAuth.Use(middleware.ServerOnly())
 	{
 		serverAuth.POST("/check-player", serverAuthHandler.CheckPlayer)
 		serverAuth.POST("/auth", serverAuthHandler.Authenticate)
 	}
+
+	// React fallback for SPA routing
+	r.NoRoute(func(c *gin.Context) {
+		c.File("./frontend/dist/index.html")
+	})
 
 	return r
 }
