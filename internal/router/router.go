@@ -2,12 +2,15 @@ package router
 
 import (
 	"database/sql"
+	"time"
 
 	"mc-webserver/internal/api"
+	"mc-webserver/internal/middleware"
 	"mc-webserver/internal/repository"
 	"mc-webserver/internal/service"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/time/rate"
 )
 
 func SetUpRouter(db *sql.DB) *gin.Engine {
@@ -26,10 +29,21 @@ func SetUpRouter(db *sql.DB) *gin.Engine {
 	whitelistHandler := api.NewWhitelistHandler(whitelistService)
 	adminHandler := api.NewAdminHandler(adminService, whitelistService)
 
-	r.POST("/register", authHandler.Register)
-	r.POST("/login", authHandler.Login)
+	r.POST("/register",
+		middleware.RateLimit(rate.Every(time.Minute/3), 1),
+		authHandler.Register,
+	)
 
-	r.POST("/whitelist/request", whitelistHandler.CreateRequest)
+	r.POST("/login",
+		middleware.RateLimit(rate.Every(time.Minute/5), 1),
+		authHandler.Login,
+	)
+
+	r.POST("/whitelist/request",
+		middleware.JWTAuthMiddleware(),
+		middleware.RateLimit(rate.Every(time.Minute/2), 1),
+		whitelistHandler.CreateRequest,
+	)
 
 	r.POST("/admin/login", adminHandler.Login)
 	r.POST("/admin/approve/:username", adminHandler.ApprovePlayer)

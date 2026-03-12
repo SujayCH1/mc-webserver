@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"net/http"
 
 	"mc-webserver/internal/service"
 
@@ -26,27 +25,29 @@ type WhitelistRequestBody struct {
 
 func (h *WhitelistHandler) CreateRequest(c *gin.Context) {
 
-	var req WhitelistRequestBody
+	username := c.GetString("username")
+
+	var req struct {
+		Message string `json:"message"`
+	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
 	err := h.Service.CreateRequest(
 		context.Background(),
-		req.Username,
-		req.DiscordID,
-		req.DiscordUsername,
+		username,
 		req.Message,
 	)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create request"})
+		c.JSON(500, gin.H{"error": "could not create request"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
+	c.JSON(200, gin.H{
 		"message": "request submitted",
 	})
 }

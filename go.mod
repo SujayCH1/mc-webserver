@@ -8,6 +8,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/lib/pq v1.11.2
 	golang.org/x/crypto v0.48.0
+	golang.org/x/time v0.12.0
 )
 
 require (
