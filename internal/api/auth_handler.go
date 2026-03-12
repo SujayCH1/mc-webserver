@@ -61,7 +61,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	var req LoginRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -71,19 +71,18 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		req.Password,
 	)
 
+	if err != nil || !ok {
+		c.JSON(401, gin.H{"error": "invalid credentials"})
+		return
+	}
+
+	token, err := h.Service.GenerateToken(req.Username, "player")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
+		c.JSON(500, gin.H{"error": "token error"})
 		return
 	}
 
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+	c.JSON(200, gin.H{
+		"token": token,
 	})
 }
