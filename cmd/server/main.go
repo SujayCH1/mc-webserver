@@ -10,6 +10,7 @@ import (
 
 func main() {
 
+	// Initialize database
 	db, err := database.InitDB()
 	if err != nil {
 		log.Fatal(err)
@@ -18,7 +19,12 @@ func main() {
 
 	fmt.Println("Database ready")
 
-	r := router.SetUpRouter()
+	// Setup router
+	r := router.SetUpRouter(db)
 
-	r.Run(":8080")
+	// Start server
+	err = r.Run(":8080")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
