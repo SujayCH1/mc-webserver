@@ -32,10 +32,13 @@ type AdminLoginRequest struct {
 
 func (h *AdminHandler) Login(c *gin.Context) {
 
-	var req AdminLoginRequest
+	var req struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -45,20 +48,19 @@ func (h *AdminHandler) Login(c *gin.Context) {
 		req.Password,
 	)
 
+	if err != nil || !ok {
+		c.JSON(401, gin.H{"error": "invalid credentials"})
+		return
+	}
+
+	token, err := h.Service.GenerateAdminToken(req.Username)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
+		c.JSON(500, gin.H{"error": "token error"})
 		return
 	}
 
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+	c.JSON(200, gin.H{
+		"token": token,
 	})
 }
 
@@ -79,4 +81,17 @@ func (h *AdminHandler) ApprovePlayer(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "player whitelisted",
 	})
+}
+
+func (h *AdminHandler) GetRequests(c *gin.Context) {
+
+	requests, err := h.WhitelistService.GetPendingRequests(context.Background())
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "could not fetch requests",
+		})
+		return
+	}
+
+	c.JSON(200, requests)
 }

@@ -45,7 +45,13 @@ func SetUpRouter(db *sql.DB) *gin.Engine {
 		whitelistHandler.CreateRequest,
 	)
 
-	r.POST("/admin/login", adminHandler.Login)
+	admin := r.Group("/admin")
+	admin.Use(middleware.AdminOnly())
+	{
+		admin.GET("/requests", adminHandler.GetRequests)
+		admin.POST("/approve/:username", adminHandler.ApprovePlayer)
+	}
+
 	r.POST("/admin/approve/:username", adminHandler.ApprovePlayer)
 
 	return r

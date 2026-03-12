@@ -49,3 +49,10 @@ func (s *WhitelistService) ApprovePlayer(
 
 	return s.PlayerRepo.SetWhitelist(ctx, username, true)
 }
+
+func (s *WhitelistService) GetPendingRequests(
+	ctx context.Context,
+) ([]repository.WhitelistRequest, error) {
+
+	return s.RequestRepo.GetPending(ctx)
+}
