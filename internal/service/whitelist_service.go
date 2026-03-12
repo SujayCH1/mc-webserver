@@ -24,15 +24,18 @@ func NewWhitelistService(
 func (s *WhitelistService) CreateRequest(
 	ctx context.Context,
 	username string,
-	discordID string,
-	discordUsername string,
 	message string,
 ) error {
 
+	player, err := s.PlayerRepo.GetByUsername(ctx, username)
+	if err != nil {
+		return err
+	}
+
 	req := repository.WhitelistRequest{
-		Username:        username,
-		DiscordID:       discordID,
-		DiscordUsername: discordUsername,
+		Username:        player.Username,
+		DiscordID:       player.DiscordID,
+		DiscordUsername: player.DiscordUsername,
 		Message:         message,
 	}
 
