@@ -9,7 +9,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func Connect() (*sql.DB, error) {
+func InitDB() (*sql.DB, error) {
 
 	host := os.Getenv("DB_HOST")
 	port := os.Getenv("DB_PORT")
