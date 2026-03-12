@@ -85,3 +85,11 @@ func (s *AuthService) GenerateToken(username string, role string) (string, error
 
 	return token.SignedString([]byte("SUPER_SECRET_KEY"))
 }
+
+func (s *AuthService) GetPlayer(
+	ctx context.Context,
+	username string,
+) (*repository.Player, error) {
+
+	return s.PlayerRepo.GetByUsername(ctx, username)
+}

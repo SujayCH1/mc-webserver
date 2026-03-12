@@ -17,18 +17,23 @@ func SetUpRouter(db *sql.DB) *gin.Engine {
 
 	r := gin.Default()
 
+	// Repositories
 	playerRepo := repository.NewPlayerRepository(db)
 	requestRepo := repository.NewWhitelistRequestRepository(db)
 	adminRepo := repository.NewAdminRepository(db)
 
+	// Services
 	authService := service.NewAuthService(playerRepo)
 	whitelistService := service.NewWhitelistService(playerRepo, requestRepo)
 	adminService := service.NewAdminService(adminRepo)
 
+	// Handlers
 	authHandler := api.NewAuthHandler(authService)
+	serverAuthHandler := api.NewServerAuthHandler(authService)
 	whitelistHandler := api.NewWhitelistHandler(whitelistService)
 	adminHandler := api.NewAdminHandler(adminService, whitelistService)
 
+	// Public APIs
 	r.POST("/register",
 		middleware.RateLimit(rate.Every(time.Minute/3), 1),
 		authHandler.Register,
@@ -39,12 +44,14 @@ func SetUpRouter(db *sql.DB) *gin.Engine {
 		authHandler.Login,
 	)
 
+	// Player APIs (JWT protected)
 	r.POST("/whitelist/request",
 		middleware.JWTAuthMiddleware(),
 		middleware.RateLimit(rate.Every(time.Minute/2), 1),
 		whitelistHandler.CreateRequest,
 	)
 
+	// Admin APIs
 	admin := r.Group("/admin")
 	admin.Use(middleware.AdminOnly())
 	{
@@ -52,7 +59,13 @@ func SetUpRouter(db *sql.DB) *gin.Engine {
 		admin.POST("/approve/:username", adminHandler.ApprovePlayer)
 	}
 
-	r.POST("/admin/approve/:username", adminHandler.ApprovePlayer)
+	// Minecraft Server APIs (IP restricted)
+	serverAuth := r.Group("/server")
+	serverAuth.Use(middleware.ServerOnly())
+	{
+		serverAuth.POST("/check-player", serverAuthHandler.CheckPlayer)
+		serverAuth.POST("/auth", serverAuthHandler.Authenticate)
+	}
 
 	return r
 }
