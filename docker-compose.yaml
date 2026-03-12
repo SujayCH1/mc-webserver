@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: mc_auth_db
+    restart: always
+    environment:
+      POSTGRES_USER: mcadmin
+      POSTGRES_PASSWORD: mcpassword
+      POSTGRES_DB: mcauth
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    container_name: mc_auth_backend
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: mcadmin
+      DB_PASSWORD: mcpassword
+      DB_NAME: mcauth
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
